@@ -942,6 +942,11 @@ public:
 
         compile_model(device);
     }
+
+    void create_ov_model(std::string path) {
+        model = core.read_model(path);
+        compile_model(device);
+    }
 };
 
 }  // namespace intel_npu_acceleration_library

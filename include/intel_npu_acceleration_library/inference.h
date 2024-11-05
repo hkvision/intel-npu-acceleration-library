@@ -96,7 +96,7 @@ protected:
      * @brief Create a ov model object. This class needs to be override in child classes
      *
      */
-    virtual void create_ov_model() {
+    virtual void create_ov_model(std::string path) {
         throw std::runtime_error("create_ov_model not implemented for OVInferenceModel class");
     };
 
