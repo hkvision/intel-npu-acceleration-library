@@ -16,9 +16,9 @@ int main() {
     int r;
     size_t nSize;
     // Using remote tensors
-    // std::vector<ov::intel_npu::level_zero::ZeroBufferTensor> hidden_buffers;
+    std::vector<ov::intel_npu::level_zero::ZeroBufferTensor> hidden_buffers;
     // Using ordinary buffers
-    std::vector<half_ptr> hidden_buffers;
+    // std::vector<half_ptr> hidden_buffers;
 
     uint32_t* input_id = new uint32_t[1];
     input_id[0] = 100;
@@ -35,8 +35,8 @@ int main() {
     auto embedding_factory = std::make_shared<ModelFactory>("NPU");
     embedding_factory->create_ov_model("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/embedding_new.xml");
 
-    half_ptr embed_buffer = new uint16_t[3584];
-    // auto embed_buffer = embedding_factory->createRemoteOutputTensor(0);
+    // half_ptr embed_buffer = new uint16_t[3584];
+    auto embed_buffer = embedding_factory->createRemoteOutputTensor(0);
     hidden_buffers.push_back(embed_buffer);
     embedding_factory->setInputTensor(input_id, 0);
     embedding_factory->setOutputTensor(embed_buffer, 0);
@@ -231,8 +231,8 @@ int main() {
         k_caches.push_back(k_cache);
         v_caches.push_back(v_cache);
 
-        half_ptr hidden_buffer = new uint16_t[3584];
-        // auto hidden_buffer = layer_factory->createRemoteOutputTensor(0);
+        // half_ptr hidden_buffer = new uint16_t[3584];
+        auto hidden_buffer = layer_factory->createRemoteOutputTensor(0);
         hidden_buffers.push_back(hidden_buffer);
         layer_factory->setOutputTensor(hidden_buffer, 0);
         half_ptr k_result = new uint16_t[1 * 4 * 128];
