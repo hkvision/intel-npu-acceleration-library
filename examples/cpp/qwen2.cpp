@@ -305,7 +305,7 @@ int main() {
     lm_head_factory->setInputTensor(lm_head_scale.get_tensor(), 2);
     lm_head_factory->setOutputTensor(logits_buffer, 0);
 
-    const size_t N = 20;
+    const size_t N = 200;
     std::cout << "Run inference on " << N << " workloads" << std::endl;
     auto start = high_resolution_clock::now();
     for (auto idx = 0; idx < N; idx++) {
