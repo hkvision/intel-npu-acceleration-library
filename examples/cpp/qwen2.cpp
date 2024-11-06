@@ -33,14 +33,15 @@ int main() {
 
     // Embedding
     auto embedding_factory = std::make_shared<ModelFactory>("NPU");
-    embedding_factory->create_ov_model("C:/Users/SAS/kai/remote-tensor/qwen-dumps/embedding_new.xml");
+    embedding_factory->create_ov_model("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/embedding_new.xml");
 
     // half_ptr embed_buffer = new uint16_t[3584];
+    // Reuse this remote tensor for all intermediate inputs/outputs
     auto hidden_buffer = embedding_factory->createRemoteOutputTensor(0);
     // hidden_buffers.push_back(embed_buffer);
     embedding_factory->setInputTensor(input_id, 0);
     embedding_factory->setOutputTensor(hidden_buffer, 0);
-    system("pause");
+    // system("pause");
 
     // Decoder
     std::vector<std::shared_ptr<ModelFactory>> decoder_layers;
@@ -52,10 +53,10 @@ int main() {
     for (int idx = 0; idx < num_layers; idx++) {
         std::cout << "Loading layer " << idx << std::endl;
         auto layer_factory = std::make_shared<ModelFactory>("NPU");
-        layer_factory->create_ov_model("C:/Users/SAS/kai/remote-tensor/qwen-dumps/decoder_layer_"+std::to_string(idx)+"_new.xml");
+        layer_factory->create_ov_model("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/decoder_layer_"+std::to_string(idx)+"_new.xml");
 
         // Current version is layernorm as const for qwen
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_3.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_3.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -65,12 +66,11 @@ int main() {
         auto q_bias = Tensor(ov::element::Type_t::f16, ov::Shape({3584}), q_bias_buffer);
         weight_buffers.push_back(q_bias);
         // half_ptr q_bias_ptr = (half_ptr)q_bias.data();
-        // half_buffers.push_back(q_bias_buffer);
         // std::cout << "q_bias: " << unsigned(q_bias_ptr[0]) << " " << unsigned(q_bias_ptr[0]) << std::endl;
         // system("pause");
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_4.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_4.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -80,7 +80,7 @@ int main() {
         auto k_bias = Tensor(ov::element::Type_t::f16, ov::Shape({512}), k_bias_buffer);
         weight_buffers.push_back(k_bias);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_5.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_5.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -91,7 +91,7 @@ int main() {
         weight_buffers.push_back(v_bias);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_8.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_8.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -101,7 +101,7 @@ int main() {
         auto q_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({3584, 3584}), q_proj_weight_buffer);
         weight_buffers.push_back(q_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_9.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_9.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -112,7 +112,7 @@ int main() {
         weight_buffers.push_back(q_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_10.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_10.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -121,7 +121,7 @@ int main() {
         auto k_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({512, 3584}), k_proj_weight_buffer);
         weight_buffers.push_back(k_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_11.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_11.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -131,7 +131,7 @@ int main() {
         weight_buffers.push_back(k_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_12.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_12.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -140,7 +140,7 @@ int main() {
         auto v_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({512, 3584}), v_proj_weight_buffer);
         weight_buffers.push_back(v_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_13.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_13.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -150,7 +150,7 @@ int main() {
         weight_buffers.push_back(v_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_14.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_14.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -159,7 +159,7 @@ int main() {
         auto o_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({3584, 3584}), o_proj_weight_buffer);
         weight_buffers.push_back(o_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_15.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_15.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -169,7 +169,7 @@ int main() {
         weight_buffers.push_back(o_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_16.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_16.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -178,7 +178,7 @@ int main() {
         auto gate_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({18944, 3584}), gate_proj_weight_buffer);
         weight_buffers.push_back(gate_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_17.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_17.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -188,7 +188,7 @@ int main() {
         weight_buffers.push_back(gate_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_18.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_18.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -197,7 +197,7 @@ int main() {
         auto up_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({18944, 3584}), up_proj_weight_buffer);
         weight_buffers.push_back(up_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_19.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_19.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -207,7 +207,7 @@ int main() {
         weight_buffers.push_back(up_proj_scale);
 
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_20.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_20.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -216,7 +216,7 @@ int main() {
         auto down_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({2, 3584, 9472}), down_proj_weight_buffer);
         weight_buffers.push_back(down_proj_weight);
         fp = nullptr;
-        r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_21.bin").c_str(), "rb");
+        r = fopen_s(&fp, ("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_21.bin").c_str(), "rb");
         fseek(fp, 0, SEEK_END);
         nSize = ftell(fp);
         fseek(fp, 0, SEEK_SET);
@@ -271,10 +271,10 @@ int main() {
 
     // LM-Head
     auto lm_head_factory = std::make_shared<ModelFactory>("NPU");
-    lm_head_factory->create_ov_model("C:/Users/SAS/kai/remote-tensor/qwen-dumps/lm_head_new.xml");
+    lm_head_factory->create_ov_model("C:/Users/Administrator/kai/remote-tensor/qwen-dumps/lm_head_new.xml");
     // Read int8 weight
     fp = nullptr;
-    r = fopen_s(&fp, "C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_lm_head_input_1.bin", "rb");
+    r = fopen_s(&fp, "C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_lm_head_input_1.bin", "rb");
     fseek(fp, 0, SEEK_END);
     nSize = ftell(fp);
     std::cout << nSize << std::endl;
@@ -287,7 +287,7 @@ int main() {
 
     // Read fp16 bias
     fp = nullptr;
-    r = fopen_s(&fp, "C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_lm_head_input_2.bin", "rb");
+    r = fopen_s(&fp, "C:/Users/Administrator/kai/remote-tensor/qwen-dumps/model_weights/model_lm_head_input_2.bin", "rb");
     fseek(fp, 0, SEEK_END);
     nSize = ftell(fp);
     std::cout << nSize << std::endl;
