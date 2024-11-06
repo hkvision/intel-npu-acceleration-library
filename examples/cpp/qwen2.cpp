@@ -62,7 +62,7 @@ int main() {
         half_ptr q_bias_buffer = new uint16_t[3584];
         fread(q_bias_buffer, 1, nSize/2, fp);
         std::cout << "q_bias: " << unsigned(q_bias_buffer[0]) << " " << unsigned(q_bias_buffer[1]) << std::endl;
-        auto q_bias = Tensor(ov::element::Type_t::f16, ov::Shape({1, 3584}), q_bias_buffer);
+        auto q_bias = Tensor(ov::element::Type_t::f16, ov::Shape({3584}), q_bias_buffer);
         weight_buffers.push_back(q_bias);
         // half_ptr q_bias_ptr = (half_ptr)q_bias.data();
         // half_buffers.push_back(q_bias_buffer);
@@ -77,7 +77,7 @@ int main() {
         half_ptr k_bias_buffer = new uint16_t[512];
         fread(k_bias_buffer, 1, nSize/2, fp);
         std::cout << "k_bias: " << unsigned(k_bias_buffer[0]) << " " << unsigned(k_bias_buffer[1]) << std::endl;
-        auto k_bias = Tensor(ov::element::Type_t::f16, ov::Shape({1, 512}), k_bias_buffer);
+        auto k_bias = Tensor(ov::element::Type_t::f16, ov::Shape({512}), k_bias_buffer);
         weight_buffers.push_back(k_bias);
         fp = nullptr;
         r = fopen_s(&fp, ("C:/Users/SAS/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_5.bin").c_str(), "rb");
@@ -87,7 +87,7 @@ int main() {
         half_ptr v_bias_buffer = new uint16_t[512];
         fread(v_bias_buffer, 1, nSize/2, fp);
         std::cout << "v_bias: " << unsigned(v_bias_buffer[0]) << " " << unsigned(v_bias_buffer[1]) << std::endl;
-        auto v_bias = Tensor(ov::element::Type_t::f16, ov::Shape({1, 512}), v_bias_buffer);
+        auto v_bias = Tensor(ov::element::Type_t::f16, ov::Shape({512}), v_bias_buffer);
         weight_buffers.push_back(v_bias);
 
         fp = nullptr;
@@ -108,7 +108,7 @@ int main() {
         half_ptr q_proj_scale_buffer = new uint16_t[3584];
         fread(q_proj_scale_buffer, 1, nSize/2, fp);
         std::cout << "q_proj scale: " << unsigned(q_proj_scale_buffer[0]) << " " << unsigned(q_proj_scale_buffer[1]) << std::endl;
-        auto q_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 3584}), q_proj_scale_buffer);
+        auto q_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({3584}), q_proj_scale_buffer);
         weight_buffers.push_back(q_proj_scale);
 
         fp = nullptr;
@@ -127,7 +127,7 @@ int main() {
         fseek(fp, 0, SEEK_SET);
         half_ptr k_proj_scale_buffer = new uint16_t[512];
         fread(k_proj_scale_buffer, 1, nSize/2, fp);
-        auto k_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 512}), k_proj_scale_buffer);
+        auto k_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({512}), k_proj_scale_buffer);
         weight_buffers.push_back(k_proj_scale);
 
         fp = nullptr;
@@ -146,7 +146,7 @@ int main() {
         fseek(fp, 0, SEEK_SET);
         half_ptr v_proj_scale_buffer = new uint16_t[512];
         fread(v_proj_scale_buffer, 1, nSize/2, fp);
-        auto v_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 512}), v_proj_scale_buffer);
+        auto v_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({512}), v_proj_scale_buffer);
         weight_buffers.push_back(v_proj_scale);
 
         fp = nullptr;
@@ -165,7 +165,7 @@ int main() {
         fseek(fp, 0, SEEK_SET);
         half_ptr o_proj_scale_buffer = new uint16_t[3584];
         fread(o_proj_scale_buffer, 1, nSize/2, fp);
-        auto o_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 3584}), o_proj_scale_buffer);
+        auto o_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({3584}), o_proj_scale_buffer);
         weight_buffers.push_back(o_proj_scale);
 
         fp = nullptr;
@@ -184,7 +184,7 @@ int main() {
         fseek(fp, 0, SEEK_SET);
         half_ptr gate_proj_scale_buffer = new uint16_t[18944];
         fread(gate_proj_scale_buffer, 1, nSize/2, fp);
-        auto gate_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 18944}), gate_proj_scale_buffer);
+        auto gate_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({18944}), gate_proj_scale_buffer);
         weight_buffers.push_back(gate_proj_scale);
 
         fp = nullptr;
@@ -203,7 +203,7 @@ int main() {
         fseek(fp, 0, SEEK_SET);
         half_ptr up_proj_scale_buffer = new uint16_t[18944];
         fread(up_proj_scale_buffer, 1, nSize/2, fp);
-        auto up_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({1, 18944}), up_proj_scale_buffer);
+        auto up_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({18944}), up_proj_scale_buffer);
         weight_buffers.push_back(up_proj_scale);
 
         fp = nullptr;
