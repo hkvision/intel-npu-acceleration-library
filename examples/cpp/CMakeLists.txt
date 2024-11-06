@@ -31,5 +31,7 @@ include_directories(${intel_npu_acceleration_library_SOURCE_DIR}/include)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_executable(intel_npu_acceleration_library_example main.cpp)
+add_executable(qwen2_example qwen2.cpp)
 
 target_link_libraries(intel_npu_acceleration_library_example PRIVATE openvino::runtime)
+target_link_libraries(qwen2_example PRIVATE openvino::runtime)
