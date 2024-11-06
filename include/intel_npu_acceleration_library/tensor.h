@@ -47,6 +47,10 @@ public:
     void* data() {
         return data_ptr;
     }
+
+    ov::intel_npu::level_zero::ZeroBufferTensor get_tensor() {
+        return _remote_tensor;
+    }
 };
 
 }  // namespace intel_npu_acceleration_library

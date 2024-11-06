@@ -225,23 +225,23 @@ int main() {
         auto down_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({2, 3584}), down_proj_scale_buffer);
         weight_buffers.push_back(down_proj_scale);
 
-        layer_factory->setInputTensor(q_bias_buffer, 3);
-        layer_factory->setInputTensor(k_bias_buffer, 4);
-        layer_factory->setInputTensor(v_bias_buffer, 5);
-        layer_factory->setInputTensor(q_proj_weight_buffer, 8);
-        layer_factory->setInputTensor(q_proj_scale_buffer, 9);
-        layer_factory->setInputTensor(k_proj_weight_buffer, 10);
-        layer_factory->setInputTensor(k_proj_scale_buffer, 11);
-        layer_factory->setInputTensor(v_proj_weight_buffer, 12);
-        layer_factory->setInputTensor(v_proj_scale_buffer, 13);
-        layer_factory->setInputTensor(o_proj_weight_buffer, 14);
-        layer_factory->setInputTensor(o_proj_scale_buffer, 15);
-        layer_factory->setInputTensor(gate_proj_weight_buffer, 16);
-        layer_factory->setInputTensor(gate_proj_scale_buffer, 17);
-        layer_factory->setInputTensor(up_proj_weight_buffer, 18);
-        layer_factory->setInputTensor(up_proj_scale_buffer, 19);
-        layer_factory->setInputTensor(down_proj_weight_buffer, 20);
-        layer_factory->setInputTensor(down_proj_scale_buffer, 21);
+        layer_factory->setInputTensor(q_bias.get_tensor(), 3);
+        layer_factory->setInputTensor(k_bias.get_tensor(), 4);
+        layer_factory->setInputTensor(v_bias.get_tensor(), 5);
+        layer_factory->setInputTensor(q_proj_weight.get_tensor(), 8);
+        layer_factory->setInputTensor(q_proj_scale.get_tensor(), 9);
+        layer_factory->setInputTensor(k_proj_weight.get_tensor(), 10);
+        layer_factory->setInputTensor(k_proj_scale.get_tensor(), 11);
+        layer_factory->setInputTensor(v_proj_weight.get_tensor(), 12);
+        layer_factory->setInputTensor(v_proj_scale.get_tensor(), 13);
+        layer_factory->setInputTensor(o_proj_weight.get_tensor(), 14);
+        layer_factory->setInputTensor(o_proj_scale.get_tensor(), 15);
+        layer_factory->setInputTensor(gate_proj_weight.get_tensor(), 16);
+        layer_factory->setInputTensor(gate_proj_scale.get_tensor(), 17);
+        layer_factory->setInputTensor(up_proj_weight.get_tensor(), 18);
+        layer_factory->setInputTensor(up_proj_scale.get_tensor(), 19);
+        layer_factory->setInputTensor(down_proj_weight.get_tensor(), 20);
+        layer_factory->setInputTensor(down_proj_scale.get_tensor(), 21);
         layer_factory->setInputTensor(hidden_buffer, 0);
         layer_factory->setInputTensor(attention_mask, 1);
         layer_factory->setInputTensor(position_id, 2);
@@ -301,8 +301,8 @@ int main() {
     float* logits_buffer = new float[152064];
 
     lm_head_factory->setInputTensor(hidden_buffer, 0);
-    lm_head_factory->setInputTensor(lm_head_weight_buffer, 1);
-    lm_head_factory->setInputTensor(lm_head_scale_buffer, 2);
+    lm_head_factory->setInputTensor(lm_head_weight.get_tensor(), 1);
+    lm_head_factory->setInputTensor(lm_head_scale.get_tensor(), 2);
     lm_head_factory->setOutputTensor(logits_buffer, 0);
 
     const size_t N = 20;
