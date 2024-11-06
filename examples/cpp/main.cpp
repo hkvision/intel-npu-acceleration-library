@@ -51,6 +51,7 @@ int main() {
     auto weights_buffer = factory->createRemoteInputTensor(1);
     auto bias_buffer = factory->createRemoteInputTensor(2);
     auto output_buffer = factory->createRemoteOutputTensor(0);
+    // system("pause");
 
     std::memset(input_buffer.get(), 0, input_buffer.get_byte_size());
     std::memset(weights_buffer.get(), 0, weights_buffer.get_byte_size());
