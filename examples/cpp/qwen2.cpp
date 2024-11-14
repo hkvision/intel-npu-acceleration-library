@@ -195,6 +195,9 @@ int main() {
     auto logits = lm_head_factory->createRemoteOutputTensor(0);
     lm_head_factory->setOutputTensor(logits, 0);
 
+    // prefill
+    std::vector<int> prompts = {15469, 102021, 30};
+    input_id[0] = prompts[0];
     const size_t N = 50;
     std::cout << "Run inference on " << N << " workloads" << std::endl;
     auto start = high_resolution_clock::now();
@@ -225,13 +228,18 @@ int main() {
         // std::cout << "v: " << unsigned(v_results[0][0]) << " " << unsigned(v_results[0][1]) << std::endl;
         // std::cout << "v: " << unsigned(v_results[0][510]) << " " << unsigned(v_results[0][511]) << std::endl;
         // system("pause");
-        float* plogits = (float*)logits.get();
-        // std::cout << plogits[0] << " " << plogits[57857] << std::endl;
-        std::vector<float> vlogits(plogits, plogits + 152064);
-        auto result = std::max_element(vlogits.begin(), vlogits.end());
-        // Should be updated in place
-        input_id[0] = std::distance(vlogits.begin(), result);
-        std::cout << "New token: " << input_id[0] << std::endl;
+        if (k < prompts.size() - 1) {  // prefill
+            input_id[0] = prompts[k + 1];
+        }
+        else {
+            float* plogits = (float*)logits.get();
+            // std::cout << plogits[0] << " " << plogits[1] << std::endl;
+            std::vector<float> vlogits(plogits, plogits + 152064);
+            auto result = std::max_element(vlogits.begin(), vlogits.end());
+            // Should be updated in place
+            input_id[0] = std::distance(vlogits.begin(), result);
+            std::cout << "New token: " << input_id[0] << std::endl;
+        }
         position_id[0] = k + 1;
         attention_mask[position_id[0] - 1] = 0;
     }
