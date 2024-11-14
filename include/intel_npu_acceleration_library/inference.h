@@ -75,10 +75,12 @@ protected:
         }
         // set letency hint
         core.set_property(ov::cache_dir("cache"));
-        core.set_property(device, ov::hint::performance_mode(ov::hint::PerformanceMode::THROUGHPUT));
+        core.set_property(device, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
         // core.set_property("NPU", ov::log::level(ov::log::Level::DEBUG));
         if (device == "NPU") {
             core.set_property(device, intel_npu_acceleration_library::npu_compiler_type("DRIVER"));
+            std::string npu_param = "compute-layers-with-higher-precision=Sqrt,Power,ReduceMean,Add";
+            core.set_property(device, intel_npu_acceleration_library::npu_parameters(npu_param));
             if (profile) {
                 core.set_property(device, ov::enable_profiling(true));
                 core.set_property(device, intel_npu_acceleration_library::npu_parameters(
