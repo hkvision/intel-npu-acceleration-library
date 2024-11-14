@@ -12,13 +12,51 @@ using namespace intel_npu_acceleration_library;
 using namespace std;
 using namespace std::chrono;
 
+void read_weight_from_file_and_set_input(string model_weight_dir, string model_name,
+                                         string model_layer, int idx,
+                                         ov::intel_npu::level_zero::ZeroBufferTensor input_tensor)
+{
+    string filename = model_weight_dir + "\\" + model_name + "_" + model_layer + "_input_" + to_string(idx) + ".bin";
+    int size_in_byte = input_tensor.get_byte_size();
+    int8_t* argptr = (int8_t*)malloc(size_in_byte);
+    FILE* fp = nullptr;
+    int r = fopen_s(&fp, filename.c_str(), "rb");
+    fseek(fp, 0, SEEK_END);
+    size_t nSize = ftell(fp);
+    // printf("read %d size bytes from %s\n", nSize, filename.c_str());
+    fseek(fp, 0, SEEK_SET);
+    fread(argptr, 1, nSize, fp);
+    fclose(fp);
+    memcpy(input_tensor.get(), argptr, size_in_byte);
+}
+
+
+void read_weight_from_file_and_set_to_ptr(string model_weight_dir, string model_name,
+                                          string model_layer, int idx, int8_t* argptr)
+{
+    string filename = model_weight_dir + "\\" + model_name + "_" + model_layer + "_input_" + to_string(idx) + ".bin";
+    FILE* fp = nullptr;
+    int r = fopen_s(&fp, filename.c_str(), "rb");
+    fseek(fp, 0, SEEK_END);
+    size_t nSize = ftell(fp);
+    // printf("read %d size bytes from %s\n", nSize, filename.c_str());
+    fseek(fp, 0, SEEK_SET);
+    fread(argptr, 1, nSize, fp);
+    fclose(fp);
+}
+
+
 int main() {
     FILE* fp = nullptr;
     int r;
     size_t nSize;
 
+    const string model_dir = "D:\\kai\\remote-tensor\\qwen-dumps";
+    const string model_weight_dir = model_dir + "\\model_weights";
+
+
     uint32_t* input_id = new uint32_t[1];
-    input_id[0] = 100;
+    input_id[0] = 15469;
     uint64_t* attention_mask = new uint64_t[1024];
     int64_t minVal = std::numeric_limits<int64_t>::min();
     for(int i = 0; i < 1024; i++){
@@ -29,7 +67,7 @@ int main() {
     attention_mask[1023] = 0;
 
     auto embedding_factory = std::make_shared<ModelFactory>("NPU");
-    embedding_factory->create_ov_model("D:/kai/remote-tensor/qwen-dumps/embedding_new.xml");
+    embedding_factory->create_ov_model(model_dir + "\\embedding_new.xml");
     auto hidden_buffer = embedding_factory->createRemoteOutputTensor(0);
     embedding_factory->setInputTensor(input_id, 0);
     embedding_factory->setOutputTensor(hidden_buffer, 0);
@@ -39,66 +77,74 @@ int main() {
     std::vector<half_ptr> v_caches;
     std::vector<half_ptr> k_results;
     std::vector<half_ptr> v_results;
-    const int num_layers = 26;
+    const int num_layers = 28;
     for (int idx = 0; idx < num_layers; idx++) {
         std::cout << "Loading layer " << idx << std::endl;
         auto layer_factory = std::make_shared<ModelFactory>("NPU");
-        layer_factory->create_ov_model("D:/kai/remote-tensor/qwen-dumps/decoder_layer_"+std::to_string(idx)+"_new.xml");
+        layer_factory->create_ov_model(model_dir + "\\decoder_layer_"+std::to_string(idx)+"_new.xml");
         layer_factory->setInputTensor(hidden_buffer, 0);
         layer_factory->setInputTensor(attention_mask, 1);
         layer_factory->setInputTensor(position_id, 2);
 
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_3.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        // std::cout << nSize << std::endl;
-        fseek(fp, 0, SEEK_SET);
-        half_ptr input_layernorm_buffer = new uint16_t[3584];
-        fread(input_layernorm_buffer, 2, nSize/2, fp);
-        // std::cout << unsigned(input_layernorm_buffer[0]) << " " << unsigned(input_layernorm_buffer[1]) << std::endl;
-        // std::cout << unsigned(input_layernorm_buffer[3581]) << " " << unsigned(input_layernorm_buffer[3583]) << std::endl;
-        auto input_layer_norm = Tensor(ov::element::Type_t::f16, ov::Shape({1, 3584}), input_layernorm_buffer);
-        layer_factory->setInputTensor(input_layer_norm.get_tensor(), 3);
+        auto input_layer_norm = layer_factory->createRemoteInputTensor(3);
+        auto output_layer_norm = layer_factory->createRemoteInputTensor(4);
+        auto q_bias = layer_factory->createRemoteInputTensor(5);
+        auto k_bias = layer_factory->createRemoteInputTensor(6);
+        auto v_bias = layer_factory->createRemoteInputTensor(7);
+        auto q_proj_weight = layer_factory->createRemoteInputTensor(10);
+        auto q_proj_scale = layer_factory->createRemoteInputTensor(11);
+        auto k_proj_weight = layer_factory->createRemoteInputTensor(12);
+        auto k_proj_scale = layer_factory->createRemoteInputTensor(13);
+        auto v_proj_weight = layer_factory->createRemoteInputTensor(14);
+        auto v_proj_scale = layer_factory->createRemoteInputTensor(15);
+        auto o_proj_weight = layer_factory->createRemoteInputTensor(16);
+        auto o_proj_scale = layer_factory->createRemoteInputTensor(17);
+        auto gate_proj_weight = layer_factory->createRemoteInputTensor(18);
+        auto gate_proj_scale = layer_factory->createRemoteInputTensor(19);
+        auto up_proj_weight = layer_factory->createRemoteInputTensor(20);
+        auto up_proj_scale = layer_factory->createRemoteInputTensor(21);
+        auto down_proj_weight = layer_factory->createRemoteInputTensor(22);
+        auto down_proj_scale = layer_factory->createRemoteInputTensor(23);
 
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_4.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr output_layernorm_buffer = new uint16_t[3584];
-        fread(output_layernorm_buffer, 2, nSize/2, fp);
-        auto output_layer_norm = Tensor(ov::element::Type_t::f16, ov::Shape({1, 3584}), output_layernorm_buffer);
-        layer_factory->setInputTensor(output_layer_norm.get_tensor(), 4);
+        layer_factory->setInputTensor(input_layer_norm, 3);
+        layer_factory->setInputTensor(output_layer_norm, 4);
+        layer_factory->setInputTensor(q_bias, 5);
+        layer_factory->setInputTensor(k_bias, 6);
+        layer_factory->setInputTensor(v_bias, 7);
+        layer_factory->setInputTensor(q_proj_weight, 10);
+        layer_factory->setInputTensor(q_proj_scale, 11);
+        layer_factory->setInputTensor(k_proj_weight, 12);
+        layer_factory->setInputTensor(k_proj_scale, 13);
+        layer_factory->setInputTensor(v_proj_weight, 14);
+        layer_factory->setInputTensor(v_proj_scale, 15);
+        layer_factory->setInputTensor(o_proj_weight, 16);
+        layer_factory->setInputTensor(o_proj_scale, 17);
+        layer_factory->setInputTensor(gate_proj_weight, 18);
+        layer_factory->setInputTensor(gate_proj_scale, 19);
+        layer_factory->setInputTensor(up_proj_weight, 20);
+        layer_factory->setInputTensor(up_proj_scale, 21);
+        layer_factory->setInputTensor(down_proj_weight, 22);
+        layer_factory->setInputTensor(down_proj_scale, 23);
 
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_5.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr q_bias_buffer = new uint16_t[3584];
-        fread(q_bias_buffer, 2, nSize/2, fp);
-        auto q_bias = Tensor(ov::element::Type_t::f16, ov::Shape({3584}), q_bias_buffer);
-        layer_factory->setInputTensor(q_bias.get_tensor(), 5);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_6.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr k_bias_buffer = new uint16_t[512];
-        fread(k_bias_buffer, 2, nSize/2, fp);
-        auto k_bias = Tensor(ov::element::Type_t::f16, ov::Shape({512}), k_bias_buffer);
-        layer_factory->setInputTensor(k_bias.get_tensor(), 6);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_7.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr v_bias_buffer = new uint16_t[512];
-        fread(v_bias_buffer, 2, nSize/2, fp);
-        auto v_bias = Tensor(ov::element::Type_t::f16, ov::Shape({512}), v_bias_buffer);
-        layer_factory->setInputTensor(v_bias.get_tensor(), 7);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 3, input_layer_norm);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 4, output_layer_norm);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 5, q_bias);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 6, k_bias);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 7, v_bias);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 10, q_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 11, q_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 12, k_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 13, k_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 14, v_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 15, v_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 16, o_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 17, o_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 18, gate_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 19, gate_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 20, up_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 21, up_proj_scale);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 22, down_proj_weight);
+        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 23, down_proj_scale);
 
         half_ptr k_cache = new uint16_t[1 * 4 * 1023 * 128];
         half_ptr v_cache = new uint16_t[1 * 4 * 128 * 1023];
@@ -108,148 +154,6 @@ int main() {
         layer_factory->setInputTensor(v_cache, 9);
         k_caches.push_back(k_cache);
         v_caches.push_back(v_cache);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_10.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* q_proj_weight_buffer = new uint8_t[28 * 3584 * 128 / 2];
-        fread(q_proj_weight_buffer, 1, nSize, fp);
-        auto q_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 3584, 128}), q_proj_weight_buffer);
-        layer_factory->setInputTensor(q_proj_weight.get_tensor(), 10);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_11.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr q_proj_scale_buffer = new uint16_t[28 * 3584];
-        fread(q_proj_scale_buffer, 2, nSize/2, fp);
-        auto q_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 3584}), q_proj_scale_buffer);
-        layer_factory->setInputTensor(q_proj_scale.get_tensor(), 11);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_12.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* k_proj_weight_buffer = new uint8_t[28 * 512 * 128 / 2];
-        fread(k_proj_weight_buffer, 1, nSize, fp);
-        auto k_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 512, 128}), k_proj_weight_buffer);
-        layer_factory->setInputTensor(k_proj_weight.get_tensor(), 12);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_13.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr k_proj_scale_buffer = new uint16_t[28 * 512];
-        fread(k_proj_scale_buffer, 2, nSize/2, fp);
-        auto k_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 512}), k_proj_scale_buffer);
-        layer_factory->setInputTensor(k_proj_scale.get_tensor(), 13);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_14.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* v_proj_weight_buffer = new uint8_t[28 * 512 * 128 / 2];
-        fread(v_proj_weight_buffer, 1, nSize, fp);
-        auto v_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 512, 128}), v_proj_weight_buffer);
-        layer_factory->setInputTensor(v_proj_weight.get_tensor(), 14);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_15.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr v_proj_scale_buffer = new uint16_t[28 * 512];
-        fread(v_proj_scale_buffer, 2, nSize/2, fp);
-        auto v_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 512}), v_proj_scale_buffer);
-        layer_factory->setInputTensor(v_proj_scale.get_tensor(), 15);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_16.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* o_proj_weight_buffer = new uint8_t[28 * 3584 * 128 / 2];
-        fread(o_proj_weight_buffer, 1, nSize, fp);
-        auto o_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 3584, 128}), o_proj_weight_buffer);
-        layer_factory->setInputTensor(o_proj_weight.get_tensor(), 16);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_17.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr o_proj_scale_buffer = new uint16_t[28 * 3584];
-        fread(o_proj_scale_buffer, 2, nSize/2, fp);
-        auto o_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 3584}), o_proj_scale_buffer);
-        layer_factory->setInputTensor(o_proj_scale.get_tensor(), 17);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_18.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* gate_proj_weight_buffer = new uint8_t[28 * 18944 * 128 / 2];
-        fread(gate_proj_weight_buffer, 1, nSize, fp);
-        auto gate_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 18944, 128}), gate_proj_weight_buffer);
-        layer_factory->setInputTensor(gate_proj_weight.get_tensor(), 18);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_19.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr gate_proj_scale_buffer = new uint16_t[28 * 18944];
-        fread(gate_proj_scale_buffer, 2, nSize/2, fp);
-        auto gate_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 18944}), gate_proj_scale_buffer);
-        layer_factory->setInputTensor(gate_proj_scale.get_tensor(), 19);
-
-        std::cout << "start up proj" << std::endl;
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_20.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* up_proj_weight_buffer = new uint8_t[28 * 18944 * 128 / 2];
-        fread(up_proj_weight_buffer, 1, nSize, fp);
-        auto up_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({28, 18944, 128}), up_proj_weight_buffer);
-        layer_factory->setInputTensor(up_proj_weight.get_tensor(), 20);
-        std::cout << "start up proj" << std::endl;
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_21.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr up_proj_scale_buffer = new uint16_t[28 * 18944];
-        fread(up_proj_scale_buffer, 2, nSize/2, fp);
-        auto up_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({28, 1, 18944}), up_proj_scale_buffer);
-        layer_factory->setInputTensor(up_proj_scale.get_tensor(), 21);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_22.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        uint8_t* down_proj_weight_buffer = new uint8_t[148 * 3584 * 128 / 2];
-        fread(down_proj_weight_buffer, 1, nSize, fp);
-        auto down_proj_weight = Tensor(ov::element::Type_t::i4, ov::Shape({148, 3584, 128}), down_proj_weight_buffer);
-        layer_factory->setInputTensor(down_proj_weight.get_tensor(), 22);
-
-        fp = nullptr;
-        r = fopen_s(&fp, ("D:/kai/remote-tensor/qwen-dumps/model_weights/model_"+std::to_string(idx)+"_input_23.bin").c_str(), "rb");
-        fseek(fp, 0, SEEK_END);
-        nSize = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-        half_ptr down_proj_scale_buffer = new uint16_t[148 * 3584];
-        fread(down_proj_scale_buffer, 2, nSize/2, fp);
-        auto down_proj_scale = Tensor(ov::element::Type_t::f16, ov::Shape({148, 1, 3584}), down_proj_scale_buffer);
-        layer_factory->setInputTensor(down_proj_scale.get_tensor(), 23);
 
         layer_factory->setOutputTensor(hidden_buffer, 0);
         half_ptr k_result = new uint16_t[1 * 4 * 128];
@@ -264,7 +168,7 @@ int main() {
     }
 
     auto lm_head_factory = std::make_shared<ModelFactory>("NPU");
-    lm_head_factory->create_ov_model("D:/kai/remote-tensor/qwen-dumps/lm_head_new.xml");
+    lm_head_factory->create_ov_model(model_dir + "\\lm_head_new.xml");
 
     lm_head_factory->setInputTensor(hidden_buffer, 0);
 
@@ -291,7 +195,7 @@ int main() {
     auto logits = lm_head_factory->createRemoteOutputTensor(0);
     lm_head_factory->setOutputTensor(logits, 0);
 
-    const size_t N = 20;
+    const size_t N = 50;
     std::cout << "Run inference on " << N << " workloads" << std::endl;
     auto start = high_resolution_clock::now();
     for (auto k = 0; k < N; k++) {
@@ -316,8 +220,13 @@ int main() {
                 v_cache[i * 1023 + position_id[0]] = new_v[i];
             }
         }
+        // std::cout << "k: " << unsigned(k_results[0][0]) << " " << unsigned(k_results[0][1]) << std::endl;
+        // std::cout << "k: " << unsigned(k_results[0][510]) << " " << unsigned(k_results[0][511]) << std::endl;
+        // std::cout << "v: " << unsigned(v_results[0][0]) << " " << unsigned(v_results[0][1]) << std::endl;
+        // std::cout << "v: " << unsigned(v_results[0][510]) << " " << unsigned(v_results[0][511]) << std::endl;
+        // system("pause");
         float* plogits = (float*)logits.get();
-        std::cout << plogits[0] << " " << plogits[57857] << std::endl;
+        // std::cout << plogits[0] << " " << plogits[57857] << std::endl;
         std::vector<float> vlogits(plogits, plogits + 152064);
         auto result = std::max_element(vlogits.begin(), vlogits.end());
         // Should be updated in place
