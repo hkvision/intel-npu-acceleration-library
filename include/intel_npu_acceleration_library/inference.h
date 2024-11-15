@@ -75,10 +75,12 @@ protected:
         }
         // set letency hint
         core.set_property(ov::cache_dir("cache"));
-        core.set_property(device, ov::hint::performance_mode(ov::hint::PerformanceMode::THROUGHPUT));
+        core.set_property(device, ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
         // core.set_property("NPU", ov::log::level(ov::log::Level::DEBUG));
         if (device == "NPU") {
             core.set_property(device, intel_npu_acceleration_library::npu_compiler_type("DRIVER"));
+            std::string npu_param = "compute-layers-with-higher-precision=Sqrt,Power,ReduceMean,Add";
+            core.set_property(device, intel_npu_acceleration_library::npu_parameters(npu_param));
             if (profile) {
                 core.set_property(device, ov::enable_profiling(true));
                 core.set_property(device, intel_npu_acceleration_library::npu_parameters(
@@ -96,7 +98,7 @@ protected:
      * @brief Create a ov model object. This class needs to be override in child classes
      *
      */
-    virtual void create_ov_model() {
+    virtual void create_ov_model(std::string path) {
         throw std::runtime_error("create_ov_model not implemented for OVInferenceModel class");
     };
 
