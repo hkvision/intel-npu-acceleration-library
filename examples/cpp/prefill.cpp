@@ -88,7 +88,6 @@ int main() {
     embedding_factory->setOutputTensor(hidden_buffer, 0);
     std::cout << "embedding loaded" << std::endl;
 
-    std::vector<std::shared_ptr<ModelFactory>> decoder_layers;
     std::vector<half_ptr> k_results;
     std::vector<half_ptr> v_results;
     const int num_layers = 28;
@@ -119,7 +118,6 @@ int main() {
     auto up_proj_scale = layer_factory->createRemoteInputTensor(19);
     auto down_proj_weight = layer_factory->createRemoteInputTensor(20);
     auto down_proj_scale = layer_factory->createRemoteInputTensor(21);
-    
 
     layer_factory->setInputTensor(input_layer_norm, 3);
     layer_factory->setInputTensor(output_layer_norm, 4);
@@ -191,12 +189,14 @@ int main() {
             read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 22, down_proj_weight);
             read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 23, down_proj_scale);
             layer_factory->run();
-            half_ptr k_result_i = new uint16_t[1 * 4 * 960 * 128];
-            half_ptr v_result_i = new uint16_t[1 * 4 * 128 * 960];
-            memcpy(k_result_i, k_result, 4 * 960 * 128 * 2);
-            memcpy(v_result_i, v_result, 4 * 960 * 128 * 2);
-            k_results.push_back(k_result_i);
-            v_results.push_back(v_result_i);
+            if (k == 0) {
+                half_ptr k_result_i = new uint16_t[1 * 4 * 960 * 128];
+                half_ptr v_result_i = new uint16_t[1 * 4 * 128 * 960];
+                memcpy(k_result_i, k_result, 4 * 960 * 128 * 2);
+                memcpy(v_result_i, v_result, 4 * 960 * 128 * 2);
+                k_results.push_back(k_result_i);
+                v_results.push_back(v_result_i);
+            }
         }
         lm_head_factory->run();
     }
@@ -209,7 +209,7 @@ int main() {
     std::cout << "logits get" << std::endl;
     std::vector<float> vlogits(plogits + 2*152064, plogits + 3*152064);
     auto result = std::max_element(vlogits.begin(), vlogits.end());
-    std::cout << "New token: " << input_id[0] << std::endl;
+    std::cout << "New token: " << std::distance(vlogits.begin(), result) << std::endl;
 
     std::cout << "Inference done" << std::endl;
     system("pause");
