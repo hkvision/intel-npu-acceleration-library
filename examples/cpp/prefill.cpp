@@ -140,7 +140,6 @@ int main() {
     layer_factory->setInputTensor(up_proj_scale, 19);
     layer_factory->setInputTensor(down_proj_weight, 20);
     layer_factory->setInputTensor(down_proj_scale, 21);
-    std::cout << "set input" << std::endl;
 
     half_ptr k_result = new uint16_t[1 * 4 * 960 * 128];
     half_ptr v_result = new uint16_t[1 * 4 * 128 * 960];
@@ -164,10 +163,11 @@ int main() {
     lm_head_factory->setInputTensor(weight_buffer, 1);
     lm_head_factory->setInputTensor(scale_buffer, 2);
 
-    const size_t N = 50;
+    const size_t N = 5;
     std::cout << "Run inference on " << N << " workloads" << std::endl;
     auto start = high_resolution_clock::now();
     for (auto k = 0; k < N; k++) {
+        std::cout << k << std::endl;
         embedding_factory->run();
         for (int idx = 0; idx < num_layers; idx++) {
             std::cout << "Running layer " << idx << std::endl;
@@ -190,7 +190,7 @@ int main() {
             read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 21, up_proj_scale);
             read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 22, down_proj_weight);
             read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 23, down_proj_scale);
-
+            layer_factory->run();
             half_ptr k_result_i = new uint16_t[1 * 4 * 960 * 128];
             half_ptr v_result_i = new uint16_t[1 * 4 * 128 * 960];
             memcpy(k_result_i, k_result, 4 * 960 * 128 * 2);
