@@ -71,6 +71,9 @@ int main() {
     input_id[0] = 15469;
     input_id[1] = 102021;
     input_id[2] = 30;
+    for(int i = 3; i < 960; i++){
+        input_id[i] = 0;
+    }
     uint16_t* attention_mask = new uint16_t[960*960];
     constrcuct_prefill_mask(attention_mask, 3, 960);
     uint64_t* position_id = new uint64_t[960];
@@ -156,56 +159,58 @@ int main() {
     auto scale_buffer = lm_head_factory->createRemoteInputTensor(2);
     auto logits = lm_head_factory->createRemoteOutputTensor(0);
     lm_head_factory->setOutputTensor(logits, 0);
-    // read_weight_from_file_and_set_input(model_weight_dir, "model", "lm_head", 1, weight_buffer);
-    // read_weight_from_file_and_set_input(model_weight_dir, "model", "lm_head", 2, scale_buffer);
+    read_weight_from_file_and_set_input(model_weight_dir, "model", "lm_head", 1, weight_buffer);
+    read_weight_from_file_and_set_input(model_weight_dir, "model", "lm_head", 2, scale_buffer);
     lm_head_factory->setInputTensor(weight_buffer, 1);
     lm_head_factory->setInputTensor(scale_buffer, 2);
 
     const size_t N = 50;
     std::cout << "Run inference on " << N << " workloads" << std::endl;
     auto start = high_resolution_clock::now();
-    embedding_factory->run();
-    lm_head_factory->run();
-    for (int idx = 0; idx < num_layers; idx++) {
-        std::cout << "Running layer " << idx << std::endl;
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 3, input_layer_norm);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 4, output_layer_norm);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 5, q_bias);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 6, k_bias);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 7, v_bias);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 10, q_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 11, q_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 12, k_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 13, k_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 14, v_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 15, v_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 16, o_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 17, o_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 18, gate_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 19, gate_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 20, up_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 21, up_proj_scale);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 22, down_proj_weight);
-        read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 23, down_proj_scale);
+    for (auto k = 0; k < N; k++) {
+        embedding_factory->run();
+        for (int idx = 0; idx < num_layers; idx++) {
+            std::cout << "Running layer " << idx << std::endl;
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 3, input_layer_norm);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 4, output_layer_norm);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 5, q_bias);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 6, k_bias);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 7, v_bias);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 10, q_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 11, q_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 12, k_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 13, k_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 14, v_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 15, v_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 16, o_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 17, o_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 18, gate_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 19, gate_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 20, up_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 21, up_proj_scale);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 22, down_proj_weight);
+            read_weight_from_file_and_set_input(model_weight_dir, "model", to_string(idx), 23, down_proj_scale);
 
-        half_ptr k_result_i = new uint16_t[1 * 4 * 960 * 128];
-        half_ptr v_result_i = new uint16_t[1 * 4 * 128 * 960];
-        memcpy(k_result_i, k_result, 4 * 960 * 128 * 2);
-        memcpy(v_result_i, v_result, 4 * 960 * 128 * 2);
-        k_results.push_back(k_result_i);
-        v_results.push_back(v_result_i);
+            half_ptr k_result_i = new uint16_t[1 * 4 * 960 * 128];
+            half_ptr v_result_i = new uint16_t[1 * 4 * 128 * 960];
+            memcpy(k_result_i, k_result, 4 * 960 * 128 * 2);
+            memcpy(v_result_i, v_result, 4 * 960 * 128 * 2);
+            k_results.push_back(k_result_i);
+            v_results.push_back(v_result_i);
+        }
+        lm_head_factory->run();
     }
-    lm_head_factory->run();
-    std::cout << "lm head finish" << std::endl;
-    float* plogits = (float*)logits.get();
-    std::cout << "logits get" << std::endl;
-    std::vector<float> vlogits(plogits, plogits + 152064);
-    auto result = std::max_element(vlogits.begin(), vlogits.end());
-    std::cout << "New token: " << input_id[0] << std::endl;
 
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
     std::cout << "Average time used " << (double)duration.count()/N << std::endl;
+
+    float* plogits = (float*)logits.get();
+    std::cout << "logits get" << std::endl;
+    std::vector<float> vlogits(plogits + 2*152064, plogits + 3*152064);
+    auto result = std::max_element(vlogits.begin(), vlogits.end());
+    std::cout << "New token: " << input_id[0] << std::endl;
+
     std::cout << "Inference done" << std::endl;
     system("pause");
     return 0;
